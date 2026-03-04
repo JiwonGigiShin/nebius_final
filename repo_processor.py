@@ -1,13 +1,3 @@
-"""
-Fetches and processes GitHub repository contents for LLM summarization.
-
-Strategy:
-- Priority 1: README (always included - best project overview)
-- Priority 2: Key config files (package.json, pyproject.toml, Cargo.toml, etc.)
-- Priority 3: Source files, filtered and truncated to fit context window
-- Skipped: Binary files, lock files, generated files, vendored deps
-"""
-
 import os
 import requests
 import base64

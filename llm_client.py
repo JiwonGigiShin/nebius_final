@@ -1,8 +1,3 @@
-"""
-LLM client using Nebius Token Factory API via OpenAI-compatible SDK.
-Model: deepseek-ai/DeepSeek-R1-0528
-"""
-
 import os
 import json
 import logging
@@ -12,16 +7,42 @@ logger = logging.getLogger(__name__)
 
 MODEL = "deepseek-ai/DeepSeek-R1-0528"
 
-SYSTEM_PROMPT = """You are a senior software engineer tasked with analyzing GitHub repositories.
+SYSTEM_PROMPT = """"You are an experienced Developer Advocate and senior software engineer who has reviewed thousands of
+open source repositories. You are skilled at quickly understanding what a
+project does and explaining it clearly to both technical and non-technical audiences.
+
 Given repository contents (README, file tree, source files), produce a structured JSON summary.
 
 You MUST respond with ONLY valid JSON - no markdown fences, no extra text, just the JSON object.
+
+INSTRUCTIONS FOR EACH FIELD:
+
+'summary':
+- 2-4 sentences describing what the project does and who it is for
+- Start with the project name and what it is (e.g. "Requests is a Python HTTP library...")
+- Focus on purpose and value, not implementation details
+- Do not start with "This repository contains" or "This project is"
+- If content is sparse, infer from file structure and config files rather than saying you don't know
+
+'technologies':
+- List the most important languages, frameworks, libraries, and tools
+- Order by importance (most central to the project first)
+- Use proper capitalisation (e.g. "Python" not "python", "FastAPI" not "fastapi")
+- Do NOT include version numbers (e.g. "Flask" not "Flask 2.x")
+- Do NOT include trivial dependencies that are not central to what the project does
+- Aim for 5-10 items
+
+'structure':
+- 1-2 sentences describing how the project is laid out
+- Mention the most important directories and what they contain
+- Name the overall pattern if applicable (e.g. "standard Python package layout", "monorepo", "MVC structure")
+- Do not list every single folder, just the most meaningful ones
 
 The JSON must have exactly these three fields:
 {
   "summary": "A clear 2-4 sentence description of what the project does and its purpose.",
   "technologies": ["list", "of", "main", "languages", "frameworks", "and", "tools"],
-  "structure": "1-2 sentences describing how the project is organized."
+  "structure": "1-2 sentences describing how the project is organised."
 }
 """
 
@@ -75,7 +96,7 @@ def summarize_with_llm(context, owner, repo):
         api_key=api_key
     )
 
-    user_message = "Please analyze this GitHub repository and return a JSON summary.\n\n"
+    user_message = "Please analyse this GitHub repository and return a JSON summary.\n\n"
     user_message += "Repository: " + owner + "/" + repo + "\n\n---\n\n"
     user_message += context
     user_message += "\n\n---\n\nRespond with ONLY the JSON object. No explanation, no markdown, just JSON."
