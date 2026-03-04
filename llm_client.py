@@ -1,8 +1,3 @@
-"""
-LLM client using Nebius Token Factory API via OpenAI-compatible SDK.
-Model: meta-llama/Meta-Llama-3.1-70B-Instruct-fast
-"""
-
 import os
 import json
 import logging
@@ -10,9 +5,9 @@ from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
-MODEL = "meta-llama/Meta-Llama-3.1-70B-Instruct-fast"
+MODEL = "deepseek-ai/DeepSeek-R1-0528"
 
-SYSTEM_PROMPT = """You are a senior software engineer tasked with analyzing GitHub repositories.
+SYSTEM_PROMPT = """You are a senior software engineer tasked with analysing GitHub repositories.
 Given repository contents (README, file tree, source files), produce a structured JSON summary.
 
 You MUST respond with ONLY valid JSON - no markdown fences, no extra text, just the JSON object.
@@ -21,12 +16,12 @@ The JSON must have exactly these three fields:
 {
   "summary": "A clear 2-4 sentence description of what the project does and its purpose.",
   "technologies": ["list", "of", "main", "languages", "frameworks", "and", "tools"],
-  "structure": "1-2 sentences describing how the project is organized."
+  "structure": "1-2 sentences describing how the project is organised."
 }
 """
 
 
-def summarize_with_llm(context, owner, repo):
+def summarise_with_llm(context, owner, repo):
     api_key = os.environ.get("NEBIUS_API_KEY")
     if not api_key:
         raise ValueError("NEBIUS_API_KEY environment variable is not set.")
@@ -36,7 +31,7 @@ def summarize_with_llm(context, owner, repo):
         api_key=api_key
     )
 
-    user_message = "Please analyze this GitHub repository and return a JSON summary.\n\n"
+    user_message = "Please analyse this GitHub repository and return a JSON summary.\n\n"
     user_message += "Repository: " + owner + "/" + repo + "\n\n---\n\n"
     user_message += context
     user_message += "\n\n---\n\nRespond with ONLY the JSON object."

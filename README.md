@@ -9,6 +9,7 @@ A Flask service that takes a GitHub repository URL and returns a human-readable 
 ### Prerequisites
 - Python 3.10+
 - A [Nebius Token Factory](https://studio.nebius.com/) API key
+- A [GitHub Personal Access Token](https://github.com/settings/tokens) (free, needed to avoid rate limits)
 
 ### 1. Clone / unzip the project
 
@@ -30,10 +31,31 @@ source .venv/bin/activate      # macOS/Linux
 pip install -r requirements.txt
 ```
 
-### 4. Set your API key
+### 4. Set your API keys
 
+You need to set two API keys before starting the server. Think of these as passwords that allow the app to talk to external services. You need to do this every time you open a new terminal window.
+
+**Nebius API key** (for the AI summarization):
+
+- Log in to [Nebius Token Factory](https://studio.nebius.com), click your profile picture (top right) → **API Keys** → **Create API Key**
+
+**GitHub token** (to avoid hitting GitHub's rate limit of 60 requests/hour):
+
+- Go to [github.com](https://github.com) → profile picture → **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)** → **Generate new token (classic)**
+- Give it any name, set any expiry, and **don't tick any scopes** — then click **Generate token** and copy it immediately (you won't see it again)
+
+Once you have both, set them in your terminal:
+
+**Mac/Linux:**
 ```bash
 export NEBIUS_API_KEY="your_nebius_api_key_here"
+export GITHUB_TOKEN="your_github_token_here"
+```
+
+**Windows:**
+```
+set NEBIUS_API_KEY=your_nebius_api_key_here
+set GITHUB_TOKEN=your_github_token_here
 ```
 
 ### 5. Start the server

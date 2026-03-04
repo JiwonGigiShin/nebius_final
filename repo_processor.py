@@ -12,9 +12,9 @@ MAX_FILE_CHARS = 6000
 
 SKIP_DIRS = {
     "node_modules", ".git", "__pycache__", ".pytest_cache", "dist", "build",
-    "target", "vendor", ".venv", "venv", "env", ".env",
-    "out", "eggs", "wheels",
-    "site-packages",".cache", "tmp", "temp",
+    "target", "vendor", ".venv", "venv", "env", ".env", ".tox", "coverage",
+    ".nyc_output", ".next", ".nuxt", "out", "eggs", "wheels", "htmlcov",
+    "site-packages", "bower_components", ".cache", "tmp", "temp",
 }
 
 SKIP_EXTENSIONS = {
@@ -118,7 +118,11 @@ def build_dir_tree(all_files, max_depth=3):
 
 
 def fetch_repo_contents(owner, repo):
+    import os
+    token = os.environ.get("GITHUB_TOKEN", "")
     headers = {"Accept": "application/vnd.github+json"}
+    if token:
+        headers["Authorization"] = "Bearer " + token
 
     repo_resp = requests.get(f"{GITHUB_API}/repos/{owner}/{repo}", headers=headers, timeout=15)
     if repo_resp.status_code == 404:
