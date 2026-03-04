@@ -1,4 +1,4 @@
-# GitHub Repository Summarizer
+# GitHub Repository Summariser
 
 A simple Flask service that takes a GitHub repository URL and returns a human-readable summary: what it does, what technologies it uses, and how it's structured.
 
@@ -11,10 +11,11 @@ A simple Flask service that takes a GitHub repository URL and returns a human-re
 - A [Nebius Token Factory](https://studio.nebius.com/) API key
 - A [GitHub Personal Access Token](https://github.com/settings/tokens) (free, needed to avoid rate limits)
 
-### 1. Unzip the project and navigate into it
+### 1. Git clone & Unzip the project and navigate into it
 
 ```
-cd github-summarizer
+git clone git@github.com:JiwonGigiShin/nebius_final.git
+cd nebius_final
 ```
 
 ### 2. Create a virtual environment
