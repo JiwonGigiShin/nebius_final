@@ -13,7 +13,7 @@ A Flask service that takes a GitHub repository URL and returns a human-readable 
 ### 1. Clone / unzip the project
 
 ```bash
-cd github-summarizer
+cd nebius-final
 ```
 
 ### 2. Create a virtual environment
