@@ -2,7 +2,7 @@ import re
 import logging
 from flask import Flask, request, jsonify
 from repo_processor import fetch_repo_contents, build_llm_context
-from llm_client import summarise_with_llm
+from llm_client import summarize_with_llm
 
 logging.basicConfig(level=logging.INFO)
 
@@ -43,7 +43,7 @@ def summarize():
     context = build_llm_context(repo_data)
 
     try:
-        result = summarise_with_llm(context, owner, repo)
+        result = summarize_with_llm(context, owner, repo)
     except Exception as e:
         return jsonify({"status": "error", "message": f"LLM API error: {str(e)}"}), 502
 

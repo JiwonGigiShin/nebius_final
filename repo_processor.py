@@ -1,3 +1,14 @@
+"""
+Fetches and processes GitHub repository contents for LLM summarization.
+
+Strategy:
+- Priority 1: README (always included - best project overview)
+- Priority 2: Key config files (package.json, pyproject.toml, Cargo.toml, etc.)
+- Priority 3: Source files, filtered and truncated to fit context window
+- Skipped: Binary files, lock files, generated files, vendored deps
+"""
+
+import os
 import requests
 import base64
 import logging
@@ -55,6 +66,14 @@ SOURCE_EXTENSIONS = {
 }
 
 
+def get_headers():
+    token = os.environ.get("GITHUB_TOKEN", "")
+    headers = {"Accept": "application/vnd.github+json"}
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    return headers
+
+
 def should_skip_path(path):
     parts = Path(path).parts
     for part in parts:
@@ -79,9 +98,9 @@ def is_priority_file(path):
     return name in PRIORITY_FILENAMES
 
 
-def fetch_file_content(owner, repo, path):
-    url = f"{GITHUB_API}/repos/{owner}/{repo}/contents/{path}"
-    response = requests.get(url, timeout=15)
+def fetch_file_content(owner, repo, path, headers):
+    url = GITHUB_API + "/repos/" + owner + "/" + repo + "/contents/" + path
+    response = requests.get(url, headers=headers, timeout=15)
     if response.status_code != 200:
         return None
     data = response.json()
@@ -118,13 +137,9 @@ def build_dir_tree(all_files, max_depth=3):
 
 
 def fetch_repo_contents(owner, repo):
-    import os
-    token = os.environ.get("GITHUB_TOKEN", "")
-    headers = {"Accept": "application/vnd.github+json"}
-    if token:
-        headers["Authorization"] = "Bearer " + token
+    headers = get_headers()
 
-    repo_resp = requests.get(f"{GITHUB_API}/repos/{owner}/{repo}", headers=headers, timeout=15)
+    repo_resp = requests.get(GITHUB_API + "/repos/" + owner + "/" + repo, headers=headers, timeout=15)
     if repo_resp.status_code == 404:
         raise Exception("404: Repository not found")
     repo_resp.raise_for_status()
@@ -135,7 +150,7 @@ def fetch_repo_contents(owner, repo):
     topics = repo_info.get("topics", [])
 
     tree_resp = requests.get(
-        f"{GITHUB_API}/repos/{owner}/{repo}/git/trees/{default_branch}",
+        GITHUB_API + "/repos/" + owner + "/" + repo + "/git/trees/" + default_branch,
         params={"recursive": "1"},
         headers=headers,
         timeout=15
@@ -146,6 +161,8 @@ def fetch_repo_contents(owner, repo):
         item["path"] for item in tree_resp.json().get("tree", [])
         if item["type"] == "blob"
     ]
+
+    logger.info("Total files in repo: %d", len(all_files))
 
     dir_tree = build_dir_tree(all_files)
 
@@ -169,7 +186,7 @@ def fetch_repo_contents(owner, repo):
 
     readme_content = ""
     if readme_path:
-        content = fetch_file_content(owner, repo, readme_path)
+        content = fetch_file_content(owner, repo, readme_path, headers)
         if content:
             readme_content = content[:MAX_FILE_CHARS]
             chars_used += len(readme_content)
@@ -179,7 +196,7 @@ def fetch_repo_contents(owner, repo):
     for path in priority_files:
         if chars_used >= budget:
             break
-        content = fetch_file_content(owner, repo, path)
+        content = fetch_file_content(owner, repo, path, headers)
         if content:
             truncated = content[:MAX_FILE_CHARS]
             files_content.append((path, truncated))
@@ -189,7 +206,7 @@ def fetch_repo_contents(owner, repo):
     for path in source_files:
         if chars_used >= budget:
             break
-        content = fetch_file_content(owner, repo, path)
+        content = fetch_file_content(owner, repo, path, headers)
         if content:
             truncated = content[:MAX_FILE_CHARS]
             files_content.append((path, truncated))

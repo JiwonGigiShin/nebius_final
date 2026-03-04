@@ -1,6 +1,6 @@
 # GitHub Repository Summarizer
 
-A Flask service that takes a GitHub repository URL and returns a human-readable summary: what it does, what technologies it uses, and how it's structured.
+A simple Flask service that takes a GitHub repository URL and returns a human-readable summary: what it does, what technologies it uses, and how it's structured.
 
 ---
 
@@ -11,23 +11,33 @@ A Flask service that takes a GitHub repository URL and returns a human-readable 
 - A [Nebius Token Factory](https://studio.nebius.com/) API key
 - A [GitHub Personal Access Token](https://github.com/settings/tokens) (free, needed to avoid rate limits)
 
-### 1. Clone / unzip the project
+### 1. Unzip the project and navigate into it
 
-```bash
-cd nebius-final
+```
+cd github-summarizer
 ```
 
 ### 2. Create a virtual environment
 
-```bash
-python -m venv .venv
-source .venv/bin/activate      # macOS/Linux
-# .venv\Scripts\activate       # Windows
+A virtual environment keeps this project's dependencies separate from the rest of your computer. You only need to do this once.
+
+**Mac/Linux:**
 ```
+python -m venv .venv
+source .venv/bin/activate
+```
+
+**Windows:**
+```
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+You'll know it's working when you see `(.venv)` at the start of your terminal line.
 
 ### 3. Install dependencies
 
-```bash
+```
 pip install -r requirements.txt
 ```
 
@@ -36,18 +46,16 @@ pip install -r requirements.txt
 You need to set two API keys before starting the server. Think of these as passwords that allow the app to talk to external services. You need to do this every time you open a new terminal window.
 
 **Nebius API key** (for the AI summarization):
-
 - Log in to [Nebius Token Factory](https://studio.nebius.com), click your profile picture (top right) → **API Keys** → **Create API Key**
 
 **GitHub token** (to avoid hitting GitHub's rate limit of 60 requests/hour):
-
 - Go to [github.com](https://github.com) → profile picture → **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)** → **Generate new token (classic)**
 - Give it any name, set any expiry, and **don't tick any scopes** — then click **Generate token** and copy it immediately (you won't see it again)
 
 Once you have both, set them in your terminal:
 
 **Mac/Linux:**
-```bash
+```
 export NEBIUS_API_KEY="your_nebius_api_key_here"
 export GITHUB_TOKEN="your_github_token_here"
 ```
@@ -58,24 +66,37 @@ set NEBIUS_API_KEY=your_nebius_api_key_here
 set GITHUB_TOKEN=your_github_token_here
 ```
 
+> ⚠️ These only last for the current terminal session. If you close and reopen your terminal, you'll need to set them again.
+> 🔒 Never share your API keys or paste them into your code — treat them like passwords.
+
 ### 5. Start the server
 
-```bash
+```
 python main.py
 ```
 
-The server will be available at `http://localhost:8000`.
+You should see something like:
+```
+* Running on http://0.0.0.0:8000
+```
+
+The server is now ready to use.
 
 ---
 
 ## Usage
 
-### Summarize a repository
+Open a **new terminal window** (keep the server running in the other one) and run:
 
-```bash
+```
 curl -X POST http://localhost:8000/summarize \
   -H "Content-Type: application/json" \
   -d '{"github_url": "https://github.com/psf/requests"}'
+```
+
+**On Windows (PowerShell):**
+```
+Invoke-WebRequest -Uri http://localhost:8000/summarize -Method POST -ContentType "application/json" -Body '{"github_url": "https://github.com/psf/requests"}'
 ```
 
 **Example response:**
@@ -87,9 +108,11 @@ curl -X POST http://localhost:8000/summarize \
 }
 ```
 
+> 💡 If you visit `http://localhost:8000/summarize` in your browser you'll get a "Not Found" error — that's normal. Browsers send GET requests, but this endpoint only accepts POST requests. Use curl or PowerShell instead.
+
 ### Health check
 
-```bash
+```
 curl http://localhost:8000/health
 ```
 
@@ -123,9 +146,9 @@ curl http://localhost:8000/health
 
 ## Design Decisions
 
-### Model: `meta-llama/Meta-Llama-3.1-70B-Instruct`
+### Model: `deepseek-ai/DeepSeek-R1-0528`
 
-Chosen for its strong instruction-following capability (reliably returns JSON), large 128k context window (handles big repos), and availability on Nebius's free tier. The 70B size hits a good balance between quality and speed.
+We use DeepSeek R1 because it is a reasoning model — before giving its final answer, it thinks through the problem step by step internally. This makes it significantly better at tasks that require understanding and synthesis, like reading through a codebase and producing an accurate, structured summary. Compared to standard models, it is less likely to hallucinate technologies or misrepresent what a project does. It is available on Nebius Token Factory and performs well within the free credit tier.
 
 ### Repository Content Strategy
 
@@ -147,10 +170,7 @@ Repositories can be huge, so the service uses a tiered content selection approac
 - `node_modules/`, `vendor/`, `.git/`, `__pycache__/`, build outputs — irrelevant or huge
 - Lock files (`package-lock.json`, `poetry.lock`, etc.) — verbose, low-signal
 - Binary & media files (images, fonts, compiled artifacts)
-- Generated/minified files (`.min.js`, `.map`, etc.)
 - Boilerplate files (`LICENSE`, `.gitignore`, `CHANGELOG`, etc.)
 
 **Directory tree:**
-- A compact tree (up to depth 3) is always included to give the LLM structural context even for files whose contents weren't fetched
-
-This approach ensures the LLM always gets the highest-signal content (README + manifests) while using any remaining context budget on actual source code.
+- A compact tree (up to depth 3) is always included to give the model structural context even for files whose contents weren't fetched
